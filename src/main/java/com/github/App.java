@@ -20,10 +20,11 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-*/
+ */
 
 package com.github;
 
+import com.sun.xml.internal.messaging.saaj.util.ParseUtil;
 
 /**
  * Hello world!
@@ -82,10 +83,23 @@ public class App {
 			" 7       \n" +
 			"    23 9 \n";
 
+	public static String nr1547b = "" +
+			"      81 \n" +
+			"3  1    6\n" +
+			"    2 5  \n" +
+			"63  74   \n" +
+			"  4 9 2  \n" +
+			"  9 8    \n" +
+			"4    6  2\n" +
+			" 17      \n" +
+			"    23 9 \n";
+
 	public static void main(String[] args) {
 
 		Integer[][] works2 = parseSudoku(nr1546a);
 		Integer[][] doesNotWork2 = parseSudoku(nr1546b);
+
+		Integer[][] test = parseSudoku(nr1547b);
 
 		Integer[][] works = new Integer[][] {
 				new Integer[] { 9, null, 6, 8, 1, 3, 5, 4, null, },

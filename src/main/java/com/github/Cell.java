@@ -45,7 +45,7 @@ public class Cell {
 		candidates.removeAll(toRemove);
 		if (candidates.size() == 1) {
 			value = candidates.iterator().next();
-//			candidates = null;
+			candidates.clear();
 		}
 	}
 

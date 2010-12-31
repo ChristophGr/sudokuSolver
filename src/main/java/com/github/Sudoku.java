@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +36,7 @@ import com.github.Cell.Flag;
 
 public class Sudoku {
 
+	private static final int CELL_LENGTH = 5;
 	// [] line
 	// [] column
 	// private Integer[][] values;
@@ -99,16 +101,16 @@ public class Sudoku {
 	@Override
 	public String toString() {
 		StringBuffer result = new StringBuffer();
-		result.append("+++++++++++++++++++++++++++++++++++++++++\n");
+		result.append("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
 		for (int s = 0; s < 3; s++) {
-			result.append("++---+---+---++---+---+---++---+---+---++\n");
+			result.append("++-----+-----+-----++-----+-----+-----++-----+-----+-----++\n");
 			for (int t = 0; t < 3; t++) {
 				int l = s * 3 + t;
 				result.append(formatLine(l));
-				result.append("++---+---+---++---+---+---++---+---+---++\n");
+				result.append("++-----+-----+-----++-----+-----+-----++-----+-----+-----++\n");
 			}
 		}
-		result.append("+++++++++++++++++++++++++++++++++++++++++\n");
+		result.append("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
 		return result.toString();
 	}
 
@@ -168,8 +170,95 @@ public class Sudoku {
 	private void iterateSolution() {
 		changed = false;
 		recalcCandidates();
+		validate();
 		checkForSingletonCandidates();
+		validate();
 		eliminateGroupUniqueCandidates();
+		validate();
+		checkColumnCandidatesBlockingAFieldOrRow();
+		validate();
+	}
+
+	private List<Cell> getCellCandidatesForNumber(List<Cell> cells, Integer number) {
+		List<Cell> result = new ArrayList<Cell>();
+		for (Iterator<Cell> iterator = cells.iterator(); iterator.hasNext();) {
+			Cell cell = iterator.next();
+			if (!cell.getCandidates().contains(number)) {
+				result.add(cell);
+			}
+		}
+		return result;
+	}
+
+	private void checkColumnCandidatesBlockingAFieldOrRow() {
+		for (int j = 0; j < 9; j++) {
+			Set<Integer> allCandidates = getAllCandidates(columns.get(j));
+			for (Integer num : allCandidates) {
+				Set<Integer> validRows = new HashSet<Integer>();
+				Set<Integer> validFields = new HashSet<Integer>();
+
+				List<Cell> cellCandidatesForNumber = getCellCandidatesForNumber(columns.get(j), num);
+				for (Cell c : cellCandidatesForNumber) {
+					validRows.add(c.getFlags().get(Flag.Row));
+					validFields.add(c.getFlags().get(Flag.Field));
+				}
+
+				// System.err.println(validRows);
+				// System.err.println(validFields);
+
+				if (validRows.size() == 1) {
+					System.err.println("! Only 1 valid row for value " + num + " in column " + j);
+				}
+
+				if (validFields.size() == 1) {
+					System.err.println("! Only 1 valid field for value " + num + " in column " + j);
+					System.err.println(validFields);
+				}
+			}
+		}
+		// for (int x = 0; x < 3; x++) {
+		// for (int y = 0; y < 3; y++) {
+		// for (Integer k : getAllCandidtesForField(x, y)) {
+		// Set<Integer> validColumns = new HashSet<Integer>();
+		// Set<Integer> validRows = new HashSet<Integer>();
+		// for (int i = x * 3; i < x * 3 + 3; i++) {
+		// for (int j = y * 3; j < y * 3 + 3; j++) {
+		// List<Integer> canditates = getCanditates(i, j);
+		// if (canditates != null && canditates.contains(k)) {
+		// validRows.add(i);
+		// validColumns.add(j);
+		// }
+		// }
+		// }
+		// if (validColumns.size() == 1) {
+		// Integer col = validColumns.iterator().next();
+		// for (int i = 0; i < 9; i++) {
+		// if (i / 3 != x) {
+		// if (this.candidates[i][col] != null) {
+		// this.candidates[i][col].remove(k);
+		// }
+		// }
+		// }
+		// System.err.println(String.format("%s in field (%s,%s) is locked to column %s",
+		// k, x, y, col));
+		// }
+		// if (validRows.size() == 1) {
+		// Integer row = validRows.iterator().next();
+		// for (int j = 0; j < 9; j++) {
+		// if (j / 3 != y) {
+		// if (this.candidates[row][j] != null) {
+		// this.candidates[row][j].remove(k);
+		// }
+		// }
+		// }
+		// System.err.println(String.format("%s in field (%s,%s) is locked to column %s",
+		// k, x, y, row));
+		// System.err.println("_____________________");
+		// }
+		// }
+		// }
+		//
+		// }
 	}
 
 	public boolean isSolved() {
@@ -205,10 +294,13 @@ public class Sudoku {
 	}
 
 	private Set<Integer> getAllCandidates(Flag flag, Integer value, Cell origin) {
-		List<Cell> copy = new ArrayList<Cell>(getCellListForFlag(flag).get(value));
-		copy.remove(origin);
+		List<Cell> copy = getAllCellsExceptOrigin(getCellListForFlag(flag).get(value), origin);
+		return getAllCandidates(copy);
+	}
+
+	private Set<Integer> getAllCandidates(List<Cell> cells) {
 		Set<Integer> result = new HashSet<Integer>();
-		for (Cell c : copy) {
+		for (Cell c : cells) {
 			if (c.getCandidates() != null) {
 				result.addAll(c.getCandidates());
 			}
@@ -216,9 +308,15 @@ public class Sudoku {
 		return result;
 	}
 
+	private List<Cell> getAllCellsExceptOrigin(List<Cell> list, Cell origin) {
+		List<Cell> copy = new ArrayList<Cell>(list);
+		copy.remove(origin);
+		return copy;
+	}
+
 	private void eliminateGroupUniqueCandidates() {
 		for (Cell c : allCells) {
-			if(c.getValue() != null){
+			if (c.getValue() != null) {
 				continue;
 			}
 			solveValueIfCandidateIsUnique(c, Flag.Row);
@@ -231,9 +329,7 @@ public class Sudoku {
 		List<Integer> cand = new ArrayList<Integer>(c.getCandidates());
 		Set<Integer> setOfRowCandidates = getAllCandidates(flag, c.getFlags().get(flag), c);
 		cand.removeAll(setOfRowCandidates);
-		if (cand.size() == 1) {
-			c.setValue(cand.iterator().next());
-		}
+		validate();
 	}
 
 	private void recalcCandidates() {
@@ -246,6 +342,43 @@ public class Sudoku {
 		cell.removeAllCandidates(getLine(cell.getFlags().get(Flag.Row)));
 		cell.removeAllCandidates(getColumn(cell.getFlags().get(Flag.Column)));
 		cell.removeAllCandidates(getField(cell.getFlags().get(Flag.Field)));
+		validate();
 		return cell.getCandidates();
+	}
+
+	private void validate() {
+		for (Cell c : allCells) {
+			if(c.getValue() == null){
+				continue;
+			}
+			for (Cell other : rows.get(c.getFlags().get(Flag.Row))) {
+				if (c.equals(other)) {
+					continue;
+				}
+				if (c.getValue() == other.getValue()) {
+					System.err.println(this);
+					throw new IllegalStateException(c + " " + other);
+				}
+			}
+			for (Cell other : columns.get(c.getFlags().get(Flag.Column))) {
+				if (c.equals(other)) {
+					continue;
+				}
+				if (c.getValue() == other.getValue()) {
+					System.err.println(this);
+					throw new IllegalStateException(c + " " + other);
+				}
+			}
+			for (Cell other : fields.get(c.getFlags().get(Flag.Field))) {
+				if (c.equals(other)) {
+					continue;
+				}
+				if (c.getValue() == other.getValue()) {
+					System.err.println(this);
+					throw new IllegalStateException(c + " " + other);
+				}
+			}
+		}
+
 	}
 }
