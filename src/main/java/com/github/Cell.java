@@ -43,6 +43,10 @@ public class Cell {
 			throw new IllegalArgumentException("cannot remove all candidates");
 		}
 		candidates.removeAll(toRemove);
+		if (candidates.size() == 1) {
+			value = candidates.iterator().next();
+//			candidates = null;
+		}
 	}
 
 	public Integer getValue() {

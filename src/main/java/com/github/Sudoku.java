@@ -218,17 +218,16 @@ public class Sudoku {
 
 	private void eliminateGroupUniqueCandidates() {
 		for (Cell c : allCells) {
-			Set<Integer> realCand = c.getCandidates();
-			if (realCand == null) {
+			if(c.getValue() != null){
 				continue;
 			}
-			tryToFindValue(c, Flag.Row);
-			tryToFindValue(c, Flag.Column);
-			tryToFindValue(c, Flag.Field);
+			solveValueIfCandidateIsUnique(c, Flag.Row);
+			solveValueIfCandidateIsUnique(c, Flag.Column);
+			solveValueIfCandidateIsUnique(c, Flag.Field);
 		}
 	}
 
-	private void tryToFindValue(Cell c, Flag flag) {
+	private void solveValueIfCandidateIsUnique(Cell c, Flag flag) {
 		List<Integer> cand = new ArrayList<Integer>(c.getCandidates());
 		Set<Integer> setOfRowCandidates = getAllCandidates(flag, c.getFlags().get(flag), c);
 		cand.removeAll(setOfRowCandidates);
