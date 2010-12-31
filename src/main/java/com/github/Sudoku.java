@@ -24,50 +24,73 @@ THE SOFTWARE.
 package com.github;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
+import com.github.Cell.Flag;
 
 public class Sudoku {
 
 	// [] line
 	// [] column
-	private Integer[][] values;
+	// private Integer[][] values;
+	private Collection<Cell> allCells = new ArrayList<Cell>();
+	private List<List<Cell>> rows = new ArrayList<List<Cell>>();
+	private List<List<Cell>> columns = new ArrayList<List<Cell>>();
+	private List<List<Cell>> fields = new ArrayList<List<Cell>>();
 
 	public Sudoku() {
+		for (int i = 0; i < 9; i++) {
+			rows.add(i, new ArrayList<Cell>());
+			columns.add(i, new ArrayList<Cell>());
+			fields.add(i, new ArrayList<Cell>());
+		}
+		for (int i = 0; i < 9; i++) {
+			for (int j = 0; j < 9; j++) {
+				Map<Flag, Integer> flags = new HashMap<Cell.Flag, Integer>();
+				flags.put(Flag.Row, i);
+				flags.put(Flag.Column, j);
+				final int field = i / 3 * 3 + j / 3;
+				flags.put(Flag.Field, field);
+				Cell cell = new Cell(flags);
+				allCells.add(cell);
+				rows.get(i).add(cell);
+				columns.get(j).add(cell);
+				fields.get(field).add(cell);
+			}
+		}
 	}
 
 	public Sudoku(Integer[][] values) {
-		super();
-		this.values = values;
-		recalcCandidates();
-	}
-
-	public Collection<Integer> getLine(int i) {
-		return Arrays.asList(values[i]);
-	}
-
-	public Collection<Integer> getColumn(int i) {
-		Collection<Integer> result = new ArrayList<Integer>();
-		for (Integer[] row : values) {
-			result.add(row[i]);
+		this();
+		for (int i = 0; i < 9; i++) {
+			for (int j = 0; j < 9; j++) {
+				rows.get(i).get(j).setValue(values[i][j]);
+			}
 		}
-		return result;
 	}
 
-	public Collection<Integer> getFieldForCell(int i, int j) {
-		return getField(i / 3, j / 3);
+	public Set<Integer> getLine(int i) {
+		return getAllCellValues(rows.get(i));
 	}
 
-	public Collection<Integer> getField(int i, int j) {
-		Collection<Integer> result = new ArrayList<Integer>();
-		int firstRow = i * 3;
-		int firstColumn = j * 3;
-		for (int x = firstRow; x < firstRow + 3; x++) {
-			for (int y = firstColumn; y < firstColumn + 3; y++) {
-				result.add(values[x][y]);
+	public Set<Integer> getColumn(int i) {
+		return getAllCellValues(columns.get(i));
+	}
+
+	public Set<Integer> getField(int k) {
+		return getAllCellValues(fields.get(k));
+	}
+
+	private Set<Integer> getAllCellValues(Collection<Cell> cells) {
+		Set<Integer> result = new HashSet<Integer>();
+		for (Cell c : cells) {
+			if (c.getValue() != null) {
+				result.add(c.getValue());
 			}
 		}
 		return result;
@@ -97,27 +120,15 @@ public class Sudoku {
 					"|");
 			for (int t = 0; t < 3; t++) {
 				int c = s * 3 + t;
-				Integer val = values[i][c];
-				if (val == null) {
-					List<Integer> cand = candidates[i][c];
-					if (cand.size() == 2) {
-						result.append(String.format("%s,%s|", cand.get(0), cand.get(1)));
-					} else {
-						result.append(String.format("(%s)|", candidates[i][c].size()));
-					}
-					// result.append("   |");
-				} else {
-					result.append(" " + values[i][c] + " |");
-				}
+				final Cell cell = rows.get(i).get(c);
+				result.append(cell);
+				result.append("|");
 			}
 		}
 		result.append("|\n");
 		return result.toString();
 	}
 
-	@SuppressWarnings("unchecked")
-	private List<Integer>[][] candidates = new List[9][9];
-	int count = 0;
 	private boolean changed;
 
 	public void solve() {
@@ -130,162 +141,112 @@ public class Sudoku {
 		}
 	}
 
-	private void setValue(int i, int j, int value) {
-		if (values[i][j] != null) {
-			throw new IllegalArgumentException();
-		}
-
-		// validate
-		final Collection<Integer> line = getLine(i);
-		if (line.contains(value)) {
-			throw new IllegalStateException();
-		}
-		final Collection<Integer> column = getColumn(j);
-		if (column.contains(value)) {
-			throw new IllegalStateException();
-		}
-		final Collection<Integer> fieldForCell = getFieldForCell(i, j);
-		if (fieldForCell.contains(values)) {
-			throw new IllegalStateException();
-		}
-
-		changed = true;
-		values[i][j] = value;
-		candidates[i][j] = null;
-	}
+	// private void setValue(int i, int j, int value) {
+	// if (values[i][j] != null) {
+	// throw new IllegalArgumentException();
+	// }
+	//
+	// // validate
+	// final Collection<Integer> line = getLine(i);
+	// if (line.contains(value)) {
+	// throw new IllegalStateException();
+	// }
+	// final Collection<Integer> column = getColumn(j);
+	// if (column.contains(value)) {
+	// throw new IllegalStateException();
+	// }
+	// final Collection<Integer> fieldForCell = getFieldForCell(i, j);
+	// if (fieldForCell.contains(values)) {
+	// throw new IllegalStateException();
+	// }
+	//
+	// changed = true;
+	// values[i][j] = value;
+	// candidates[i][j] = null;
+	// }
 
 	private void iterateSolution() {
-		recalcCandidates();
 		changed = false;
+		recalcCandidates();
 		checkForSingletonCandidates();
-		eliminateGroupCandidates();
+		eliminateGroupUniqueCandidates();
 	}
 
 	public boolean isSolved() {
-		for (int i = 0; i < 9; i++) {
-			for (int j = 0; j < 9; j++) {
-				if (values[i][j] == null) {
-					return false;
-				}
+		for (Cell c : allCells) {
+			if (c.getValue() == null) {
+				return false;
 			}
 		}
 		return true;
 	}
 
 	private void checkForSingletonCandidates() {
-		for (int i = 0; i < 9; i++) {
-			for (int j = 0; j < 9; j++) {
-				List<Integer> cand = candidates[i][j];
-				if (cand != null && cand.size() == 1) {
-					setValue(i, j, cand.get(0));
-				}
+		for (Cell cell : allCells) {
+			Set<Integer> cand = cell.getCandidates();
+			if (cand.size() == 1) {
+				changed = true;
+				cell.setValue(cand.iterator().next());
 			}
 		}
 	}
 
-	private void eliminateGroupCandidates() {
-		for (int i = 0; i < 9; i++) {
-			for (int j = 0; j < 9; j++) {
-				List<Integer> realCand = getCanditates(i, j);
-				if (realCand == null) {
-					continue;
-				}
-				List<Integer> cand = new ArrayList<Integer>(realCand);
-				Set<Integer> setOfRowCandidates = getSetOfRowCandidates(i, j);
-				cand.removeAll(setOfRowCandidates);
-				if (cand.size() == 1) {
-					setValue(i, j, cand.get(0));
-					continue;
-				}
-
-				cand = new ArrayList<Integer>(realCand);
-				Set<Integer> setOfColumnCandidates = getSetOfColumnCandidates(j, i);
-				cand.removeAll(setOfColumnCandidates);
-				if (cand.size() == 1) {
-					setValue(i, j, cand.get(0));
-					continue;
-				}
-
-				cand = new ArrayList<Integer>(realCand);
-				Set<Integer> setOfFieldCandidates = getSetOfFieldCandidates(i / 3, j / 3, i, j);
-				cand.removeAll(setOfFieldCandidates);
-				if (cand.size() == 1) {
-					setValue(i, j, cand.get(0));
-					continue;
-				}
-			}
+	private List<List<Cell>> getCellListForFlag(Flag flag) {
+		switch (flag) {
+		case Row:
+			return rows;
+		case Column:
+			return columns;
+		case Field:
+			return fields;
+		default:
+			throw new IllegalArgumentException();
 		}
 	}
 
-	public Set<Integer> getSetOfRowCandidates(int row, int skipcol) {
+	private Set<Integer> getAllCandidates(Flag flag, Integer value, Cell origin) {
+		List<Cell> copy = new ArrayList<Cell>(getCellListForFlag(flag).get(value));
+		copy.remove(origin);
 		Set<Integer> result = new HashSet<Integer>();
-		for (int i = 0; i < 9; i++) {
-			if (i == skipcol) {
+		for (Cell c : copy) {
+			if (c.getCandidates() != null) {
+				result.addAll(c.getCandidates());
+			}
+		}
+		return result;
+	}
+
+	private void eliminateGroupUniqueCandidates() {
+		for (Cell c : allCells) {
+			Set<Integer> realCand = c.getCandidates();
+			if (realCand == null) {
 				continue;
 			}
-			final List<Integer> c = candidates[row][i];
-			if (c != null) {
-				result.addAll(c);
-			}
+			tryToFindValue(c, Flag.Row);
+			tryToFindValue(c, Flag.Column);
+			tryToFindValue(c, Flag.Field);
 		}
-		return result;
 	}
 
-	public Set<Integer> getSetOfColumnCandidates(int col, int skiprow) {
-		Set<Integer> result = new HashSet<Integer>();
-		for (int i = 0; i < 9; i++) {
-			if (i == skiprow) {
-				continue;
-			}
-			final List<Integer> c = candidates[i][col];
-			if (c != null) {
-				result.addAll(c);
-			}
+	private void tryToFindValue(Cell c, Flag flag) {
+		List<Integer> cand = new ArrayList<Integer>(c.getCandidates());
+		Set<Integer> setOfRowCandidates = getAllCandidates(flag, c.getFlags().get(flag), c);
+		cand.removeAll(setOfRowCandidates);
+		if (cand.size() == 1) {
+			c.setValue(cand.iterator().next());
 		}
-		return result;
-	}
-
-	public Set<Integer> getSetOfFieldCandidates(int x, int y, int skipi, int skipj) {
-		Set<Integer> result = new HashSet<Integer>();
-		for (int i = x * 3; i < x * 3 + 3; i++) {
-			for (int j = y * 3; j < y * 3 + 3; j++) {
-				if (i == skipi && j == skipj) {
-					continue;
-				}
-				final List<Integer> c = candidates[i][j];
-				if (c != null) {
-					result.addAll(c);
-				}
-			}
-		}
-		return result;
 	}
 
 	private void recalcCandidates() {
-		for (int i = 0; i < 9; i++) {
-			for (int j = 0; j < 9; j++) {
-				candidates[i][j] = getCanditates(i, j);
-			}
+		for (Cell cell : allCells) {
+			recalcCandidatesForCell(cell);
 		}
 	}
 
-	private List<Integer> getCanditates(int i, int j) {
-		Integer val = values[i][j];
-		if (val != null) {
-			return null;
-		}
-		List<Integer> candidates = makeCandidates();
-		candidates.removeAll(getLine(i));
-		candidates.removeAll(getColumn(j));
-		candidates.removeAll(getFieldForCell(i, j));
-		return candidates;
-	}
-
-	private List<Integer> makeCandidates() {
-		List<Integer> candidates = new ArrayList<Integer>();
-		for (int i : new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, }) {
-			candidates.add(i);
-		}
-		return candidates;
+	private Set<Integer> recalcCandidatesForCell(Cell cell) {
+		cell.removeAllCandidates(getLine(cell.getFlags().get(Flag.Row)));
+		cell.removeAllCandidates(getColumn(cell.getFlags().get(Flag.Column)));
+		cell.removeAllCandidates(getField(cell.getFlags().get(Flag.Field)));
+		return cell.getCandidates();
 	}
 }
