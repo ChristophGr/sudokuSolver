@@ -62,16 +62,16 @@ public class Cell {
 		this.value = value;
 	}
 
-	public String renderValue(){
+	public String renderValue() {
 		if (value != null) {
 			return "  " + value + "  ";
 		}
 		if (candidates.size() < 5) {
 			StringBuffer result = new StringBuffer();
-			for(Integer k : candidates){
+			for (Integer k : candidates) {
 				result.append(k);
 			}
-			while(result.length() < 5){
+			while (result.length() < 5) {
 				result.append(" ");
 			}
 			return result.toString();
@@ -79,9 +79,12 @@ public class Cell {
 		return String.format(" (%s) ", candidates.size());
 	}
 
-	@Override
-	public String toString() {
-		throw new UnsupportedOperationException();
+	public Integer getFlagValue(Flag flag) {
+		return flags.get(flag);
 	}
 
+	@Override
+	public String toString() {
+		return String.format("(%d,%d): %s %s", getFlagValue(Flag.Row), getFlagValue(Flag.Column), value, candidates);
+	}
 }

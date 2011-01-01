@@ -35,8 +35,6 @@ import java.util.Set;
 import com.github.Cell.Flag;
 
 public class Sudoku {
-
-	private static final int CELL_LENGTH = 5;
 	// [] line
 	// [] column
 	// private Integer[][] values;
@@ -101,7 +99,7 @@ public class Sudoku {
 	@Override
 	public String toString() {
 		StringBuffer result = new StringBuffer();
-		result.append("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+		result.append("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
 		for (int s = 0; s < 3; s++) {
 			result.append("++-----+-----+-----++-----+-----+-----++-----+-----+-----++\n");
 			for (int t = 0; t < 3; t++) {
@@ -110,7 +108,7 @@ public class Sudoku {
 				result.append("++-----+-----+-----++-----+-----+-----++-----+-----+-----++\n");
 			}
 		}
-		result.append("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+		result.append("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
 		return result.toString();
 	}
 
