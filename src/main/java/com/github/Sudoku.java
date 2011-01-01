@@ -186,71 +186,22 @@ public class Sudoku {
 					validFields.add(c.getFlags().get(Flag.Field));
 				}
 
-				// System.err.println(validRows);
-				// System.err.println(validFields);
-
 				if (validRows.size() == 1) {
-					System.err.println("! Only 1 valid row for value " + num + " in column " + j);
 					for (Cell c : rows.get(validRows.iterator().next())) {
 						if (c.getFlagValue(Flag.Column) != j) {
 							c.removeCandidate(num);
 						}
 					}
 				} else if (validFields.size() == 1) {
-					System.err.println("! Only 1 valid field for value " + num + " in column " + j);
 					final List<Cell> list = fields.get(validFields.iterator().next());
 					for (Cell c : list) {
 						if (c.getFlagValue(Flag.Column) != j) {
 							c.removeCandidate(num);
 						}
 					}
-					System.err.println(validFields);
 				}
 			}
 		}
-		// for (int x = 0; x < 3; x++) {
-		// for (int y = 0; y < 3; y++) {
-		// for (Integer k : getAllCandidtesForField(x, y)) {
-		// Set<Integer> validColumns = new HashSet<Integer>();
-		// Set<Integer> validRows = new HashSet<Integer>();
-		// for (int i = x * 3; i < x * 3 + 3; i++) {
-		// for (int j = y * 3; j < y * 3 + 3; j++) {
-		// List<Integer> canditates = getCanditates(i, j);
-		// if (canditates != null && canditates.contains(k)) {
-		// validRows.add(i);
-		// validColumns.add(j);
-		// }
-		// }
-		// }
-		// if (validColumns.size() == 1) {
-		// Integer col = validColumns.iterator().next();
-		// for (int i = 0; i < 9; i++) {
-		// if (i / 3 != x) {
-		// if (this.candidates[i][col] != null) {
-		// this.candidates[i][col].remove(k);
-		// }
-		// }
-		// }
-		// System.err.println(String.format("%s in field (%s,%s) is locked to column %s",
-		// k, x, y, col));
-		// }
-		// if (validRows.size() == 1) {
-		// Integer row = validRows.iterator().next();
-		// for (int j = 0; j < 9; j++) {
-		// if (j / 3 != y) {
-		// if (this.candidates[row][j] != null) {
-		// this.candidates[row][j].remove(k);
-		// }
-		// }
-		// }
-		// System.err.println(String.format("%s in field (%s,%s) is locked to column %s",
-		// k, x, y, row));
-		// System.err.println("_____________________");
-		// }
-		// }
-		// }
-		//
-		// }
 	}
 
 	public boolean isSolved() {
