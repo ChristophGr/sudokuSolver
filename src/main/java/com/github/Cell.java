@@ -49,6 +49,17 @@ public class Cell {
 		}
 	}
 
+	public void removeCandidate(Integer num) {
+		if (value != null) {
+			return;
+		}
+		candidates.remove(num);
+		if (candidates.size() == 1) {
+			value = candidates.iterator().next();
+			candidates.clear();
+		}
+	}
+
 	public Integer getValue() {
 		return value;
 	}
@@ -58,7 +69,7 @@ public class Cell {
 			return;
 		}
 		candidates.clear();
-		candidates.add(value);
+//		candidates.add(value);
 		this.value = value;
 	}
 
@@ -66,7 +77,7 @@ public class Cell {
 		if (value != null) {
 			return "  " + value + "  ";
 		}
-		if (candidates.size() < 5) {
+		if (candidates.size() <= 5) {
 			StringBuffer result = new StringBuffer();
 			for (Integer k : candidates) {
 				result.append(k);

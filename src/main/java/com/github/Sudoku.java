@@ -24,6 +24,7 @@ THE SOFTWARE.
 package com.github;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -132,38 +133,19 @@ public class Sudoku {
 	private boolean changed;
 
 	public void solve() {
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < 1000; i++) {
 			iterateSolution();
-			if (!changed) {
+
+			if (i == 20) {
 				System.out.println("break up after" + i + " iterations");
+				System.out.println(this);
+				eliminateGroupUniqueCandidates();
+				checkColumnCandidatesBlockingAFieldOrRow();
 				return;
 			}
+
 		}
 	}
-
-	// private void setValue(int i, int j, int value) {
-	// if (values[i][j] != null) {
-	// throw new IllegalArgumentException();
-	// }
-	//
-	// // validate
-	// final Collection<Integer> line = getLine(i);
-	// if (line.contains(value)) {
-	// throw new IllegalStateException();
-	// }
-	// final Collection<Integer> column = getColumn(j);
-	// if (column.contains(value)) {
-	// throw new IllegalStateException();
-	// }
-	// final Collection<Integer> fieldForCell = getFieldForCell(i, j);
-	// if (fieldForCell.contains(values)) {
-	// throw new IllegalStateException();
-	// }
-	//
-	// changed = true;
-	// values[i][j] = value;
-	// candidates[i][j] = null;
-	// }
 
 	private void iterateSolution() {
 		changed = false;
@@ -181,7 +163,10 @@ public class Sudoku {
 		List<Cell> result = new ArrayList<Cell>();
 		for (Iterator<Cell> iterator = cells.iterator(); iterator.hasNext();) {
 			Cell cell = iterator.next();
-			if (!cell.getCandidates().contains(number)) {
+			if (cell.getValue() != null) {
+				continue;
+			}
+			if (cell.getCandidates().contains(number)) {
 				result.add(cell);
 			}
 		}
@@ -206,10 +191,19 @@ public class Sudoku {
 
 				if (validRows.size() == 1) {
 					System.err.println("! Only 1 valid row for value " + num + " in column " + j);
-				}
-
-				if (validFields.size() == 1) {
+					for (Cell c : rows.get(validRows.iterator().next())) {
+						if (c.getFlagValue(Flag.Column) != j) {
+							c.removeCandidate(num);
+						}
+					}
+				} else if (validFields.size() == 1) {
 					System.err.println("! Only 1 valid field for value " + num + " in column " + j);
+					final List<Cell> list = fields.get(validFields.iterator().next());
+					for (Cell c : list) {
+						if (c.getFlagValue(Flag.Column) != j) {
+							c.removeCandidate(num);
+						}
+					}
 					System.err.println(validFields);
 				}
 			}
@@ -270,6 +264,9 @@ public class Sudoku {
 
 	private void checkForSingletonCandidates() {
 		for (Cell cell : allCells) {
+			if (cell.getValue() != null) {
+				continue;
+			}
 			Set<Integer> cand = cell.getCandidates();
 			if (cand.size() == 1) {
 				changed = true;
@@ -324,9 +321,13 @@ public class Sudoku {
 	}
 
 	private void solveValueIfCandidateIsUnique(Cell c, Flag flag) {
+		recalcCandidates();
 		List<Integer> cand = new ArrayList<Integer>(c.getCandidates());
 		Set<Integer> setOfRowCandidates = getAllCandidates(flag, c.getFlags().get(flag), c);
 		cand.removeAll(setOfRowCandidates);
+		if (cand.size() == 1) {
+			c.setValue(cand.iterator().next());
+		}
 		validate();
 	}
 
