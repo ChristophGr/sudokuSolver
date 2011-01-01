@@ -130,33 +130,27 @@ public class Sudoku {
 		return result.toString();
 	}
 
-	private boolean changed;
-
 	public void solve() {
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < 100; i++) {
+			System.out.println("starting iteration " + i);
 			iterateSolution();
-
-			if (i == 20) {
-				System.out.println("break up after" + i + " iterations");
-				System.out.println(this);
-				eliminateGroupUniqueCandidates();
-				checkColumnCandidatesBlockingAFieldOrRow();
-				return;
-			}
-
+			System.out.println("finished iteration " + i);
 		}
 	}
 
 	private void iterateSolution() {
-		changed = false;
-		recalcCandidates();
-		validate();
 		checkForSingletonCandidates();
 		validate();
 		eliminateGroupUniqueCandidates();
 		validate();
-		checkColumnCandidatesBlockingAFieldOrRow();
+		checkAllCandidatesForBlockingOtherCandidatesInOtherFlags();
 		validate();
+	}
+
+	private void checkAllCandidatesForBlockingOtherCandidatesInOtherFlags() {
+		checkCandidatesForBlockingOtherCandidatesInOtherFlags(Flag.Column);
+		checkCandidatesForBlockingOtherCandidatesInOtherFlags(Flag.Row);
+		checkCandidatesForBlockingOtherCandidatesInOtherFlags(Flag.Field);
 	}
 
 	private List<Cell> getCellCandidatesForNumber(List<Cell> cells, Integer number) {
@@ -173,29 +167,36 @@ public class Sudoku {
 		return result;
 	}
 
-	private void checkColumnCandidatesBlockingAFieldOrRow() {
+	private void checkCandidatesForBlockingOtherCandidatesInOtherFlags(Flag primaryFlag) {
+		List<Flag> allFlags = new ArrayList<Flag>(Arrays.asList(Flag.values()));
+		allFlags.remove(primaryFlag);
+		final Flag otherFlag1 = allFlags.get(0);
+		final Flag otherFlag2 = allFlags.get(1);
+
 		for (int j = 0; j < 9; j++) {
-			Set<Integer> allCandidates = getAllCandidates(columns.get(j));
+			List<Cell> watchCells = getCellListForFlag(primaryFlag).get(j);
+			Set<Integer> allCandidates = getAllCandidates(watchCells);
+
 			for (Integer num : allCandidates) {
 				Set<Integer> validRows = new HashSet<Integer>();
 				Set<Integer> validFields = new HashSet<Integer>();
 
-				List<Cell> cellCandidatesForNumber = getCellCandidatesForNumber(columns.get(j), num);
+				List<Cell> cellCandidatesForNumber = getCellCandidatesForNumber(getCellListForFlag(primaryFlag).get(j), num);
 				for (Cell c : cellCandidatesForNumber) {
-					validRows.add(c.getFlags().get(Flag.Row));
-					validFields.add(c.getFlags().get(Flag.Field));
+					validRows.add(c.getFlags().get(otherFlag1));
+					validFields.add(c.getFlags().get(otherFlag2));
 				}
 
 				if (validRows.size() == 1) {
-					for (Cell c : rows.get(validRows.iterator().next())) {
-						if (c.getFlagValue(Flag.Column) != j) {
+					for (Cell c : getCellListForFlag(otherFlag1).get(validRows.iterator().next())) {
+						if (c.getFlagValue(primaryFlag) != j) {
 							c.removeCandidate(num);
 						}
 					}
 				} else if (validFields.size() == 1) {
-					final List<Cell> list = fields.get(validFields.iterator().next());
+					final List<Cell> list = getCellListForFlag(otherFlag2).get(validFields.iterator().next());
 					for (Cell c : list) {
-						if (c.getFlagValue(Flag.Column) != j) {
+						if (c.getFlagValue(primaryFlag) != j) {
 							c.removeCandidate(num);
 						}
 					}
@@ -214,13 +215,13 @@ public class Sudoku {
 	}
 
 	private void checkForSingletonCandidates() {
+		recalcCandidates();
 		for (Cell cell : allCells) {
 			if (cell.getValue() != null) {
 				continue;
 			}
 			Set<Integer> cand = cell.getCandidates();
 			if (cand.size() == 1) {
-				changed = true;
 				cell.setValue(cand.iterator().next());
 			}
 		}
