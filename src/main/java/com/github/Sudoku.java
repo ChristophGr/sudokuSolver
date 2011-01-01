@@ -123,7 +123,7 @@ public class Sudoku {
 			for (int t = 0; t < 3; t++) {
 				int c = s * 3 + t;
 				final Cell cell = rows.get(i).get(c);
-				result.append(cell);
+				result.append(cell.renderValue());
 				result.append("|");
 			}
 		}
@@ -348,7 +348,7 @@ public class Sudoku {
 
 	private void validate() {
 		for (Cell c : allCells) {
-			if(c.getValue() == null){
+			if (c.getValue() == null) {
 				continue;
 			}
 			for (Cell other : rows.get(c.getFlags().get(Flag.Row))) {

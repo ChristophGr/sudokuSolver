@@ -62,15 +62,26 @@ public class Cell {
 		this.value = value;
 	}
 
+	public String renderValue(){
+		if (value != null) {
+			return "  " + value + "  ";
+		}
+		if (candidates.size() < 5) {
+			StringBuffer result = new StringBuffer();
+			for(Integer k : candidates){
+				result.append(k);
+			}
+			while(result.length() < 5){
+				result.append(" ");
+			}
+			return result.toString();
+		}
+		return String.format(" (%s) ", candidates.size());
+	}
+
 	@Override
 	public String toString() {
-		if (value != null) {
-			return " " + value + " ";
-		}
-		if (candidates.size() == 1) {
-			return candidates.toString();
-		}
-		return String.format("(%s)", candidates.size());
+		throw new UnsupportedOperationException();
 	}
 
 }
