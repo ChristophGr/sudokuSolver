@@ -181,7 +181,8 @@ public class Sudoku {
 				Set<Integer> validRows = new HashSet<Integer>();
 				Set<Integer> validFields = new HashSet<Integer>();
 
-				List<Cell> cellCandidatesForNumber = getCellCandidatesForNumber(getCellListForFlag(primaryFlag).get(j), num);
+				List<Cell> cellCandidatesForNumber = getCellCandidatesForNumber(getCellListForFlag(primaryFlag).get(j),
+						num);
 				for (Cell c : cellCandidatesForNumber) {
 					validRows.add(c.getFlags().get(otherFlag1));
 					validFields.add(c.getFlags().get(otherFlag2));
@@ -191,6 +192,7 @@ public class Sudoku {
 					for (Cell c : getCellListForFlag(otherFlag1).get(validRows.iterator().next())) {
 						if (c.getFlagValue(primaryFlag) != j) {
 							c.removeCandidate(num);
+							recalcCandidates();
 						}
 					}
 				} else if (validFields.size() == 1) {
@@ -198,6 +200,7 @@ public class Sudoku {
 					for (Cell c : list) {
 						if (c.getFlagValue(primaryFlag) != j) {
 							c.removeCandidate(num);
+							recalcCandidates();
 						}
 					}
 				}
@@ -284,8 +287,13 @@ public class Sudoku {
 	}
 
 	private void recalcCandidates() {
-		for (Cell cell : allCells) {
-			recalcCandidatesForCell(cell);
+		try {
+			for (Cell cell : allCells) {
+				recalcCandidatesForCell(cell);
+			}
+		} catch (IllegalArgumentException e) {
+			System.out.println(this);
+			throw e;
 		}
 	}
 
