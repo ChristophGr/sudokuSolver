@@ -24,7 +24,6 @@ THE SOFTWARE.
 
 package com.github;
 
-import com.sun.xml.internal.messaging.saaj.util.ParseUtil;
 
 /**
  * Hello world!
